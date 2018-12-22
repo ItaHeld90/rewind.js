@@ -7,21 +7,21 @@ const bla = observable({ x: 1, y: 2 });
 const foo = observable([1, 2, 3]);
 const bar = observable({ a: 'hello', b: 'world' });
 
-const main = undoableAction((obj: Object) => {
-    obj['x'] = 3;
-    subFunc();
-    obj['y'] = 4;
-});
+// const main = undoableAction((obj: Object) => {
+//     obj['x'] = 3;
+//     subFunc();
+//     obj['y'] = 4;
+// });
 
-const subFunc = undoableAction(() => {
-    foo[0] = 4;
-    foo[1] = 5;
-});
+// const subFunc = undoableAction(() => {
+//     foo[0] = 4;
+//     foo[1] = 5;
+// });
 
-const another = undoableAction(() => {
-    bar.a = 'hi';
-    bar.b = 'bye';
-});
+// const another = undoableAction(() => {
+//     bar.a = 'hi';
+//     bar.b = 'bye';
+// });
 
 // console.log('before');
 // console.log(bla);
