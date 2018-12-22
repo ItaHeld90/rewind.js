@@ -1,7 +1,6 @@
-import { spy, observable } from 'mobx';
-import { ActionType } from './general-types';
+import { spy } from 'mobx';
+import { ActionType, Action } from './general-types';
 import { pushAction, isInAction, undo, redo } from './undo-redo-store';
-import { undoableAction } from './undoable';
 
 interface MobxUpdate {
     object: Object;
@@ -17,21 +16,64 @@ interface MobxArrayUpdate extends MobxUpdate {
     index: number;
 }
 
+interface MobxObjectAdd {
+    object: Object;
+    key: string;
+    newValue: any;
+}
+
+interface MobxArraySplice {
+    object: any[];
+    index: number;
+    removed: any[];
+    removedCount: number;
+    added: any[];
+    addedCount: number;
+}
+
 spy(change => {
     if (!isInAction()) {
         return;
     }
 
-    console.log(change);
-
     switch (change.type) {
         case 'update':
             handleUpdate(change);
+        case 'add':
+            handleAdd(change);
+        case 'splice':
+            handleSplice(change);
     }
 });
 
+function handleAdd(change: any) {
+    handleObjectAdd(change);
+}
+
+function handleObjectAdd(change: MobxObjectAdd) {
+    handleObjectUpdate({ ...change, oldValue: undefined })
+}
+
+function handleSplice(change: MobxArraySplice) {
+    if (change.addedCount && !change.removedCount && change.index >= change.object.length - 1) {
+        handleArrayPush(change);
+    }
+}
+
+function handleArrayPush({ added, object }: MobxArraySplice) {
+    const actions: Action[] = added.map(val => ({
+        type: ActionType.Push,
+        info: {
+            arr: object,
+            val
+        }
+    }));
+
+    actions.forEach(pushAction);
+}
+
 function handleUpdate(change: any) {
-    return Array.isArray(change.object)
+    Array.isArray(change.object)
         ? handleArrayUpdate(change)
         : handleObjectUpdate(change);
 }
@@ -60,22 +102,3 @@ function handleObjectUpdate({ object, key, newValue, oldValue }: MobxObjectUpdat
         }
     });
 }
-
-const obs = observable({ x: 1, y: 2 });
-
-console.log(obs.x);
-
-undoableAction(() => {
-    obs.x = 3;
-})();
-
-console.log(obs.x);
-
-undo();
-console.log(obs.x);
-
-redo();
-console.log(obs.x);
-
-undo();
-console.log(obs.x)
