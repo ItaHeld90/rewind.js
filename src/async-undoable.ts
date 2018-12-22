@@ -30,3 +30,7 @@ export function undoableAsync<T extends Function>(fn: T): T {
 		},
 	});
 }
+
+export function runInUndoableAsync(fn: Function) {
+	undoableAsync(fn)();
+}

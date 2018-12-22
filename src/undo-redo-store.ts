@@ -21,7 +21,6 @@ export function redo() {
 
 export function undo() {
     const actions = popLastUndoActions();
-    // console.log(actions);
 
 	if (actions) {
 		actions.forEach(undoAction);
