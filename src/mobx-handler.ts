@@ -1,6 +1,7 @@
-import { spy } from 'mobx';
+import { spy, observable } from 'mobx';
 import { ActionType, Action } from './general-types';
 import { pushAction, isInAction, undo, redo } from './undo-redo-store';
+import { runInUndoableAction } from './undoable';
 
 interface MobxUpdate {
     object: Object;
@@ -31,7 +32,7 @@ interface MobxArraySplice {
     addedCount: number;
 }
 
-spy(change => {
+export function mobxRewind(change: any) {
     if (!isInAction()) {
         return;
     }
@@ -44,7 +45,7 @@ spy(change => {
         case 'splice':
             handleSplice(change);
     }
-});
+}
 
 function handleAdd(change: any) {
     handleObjectAdd(change);
@@ -102,3 +103,23 @@ function handleObjectUpdate({ object, key, newValue, oldValue }: MobxObjectUpdat
         }
     });
 }
+
+// Test
+
+spy(change => {
+    mobxRewind(change);
+});
+
+const obs = observable([1, 2, 3]);
+
+console.log(obs.toJS());
+
+runInUndoableAction(() => {
+    obs.push(4);
+});
+
+console.log(obs.toJS());
+
+undo();
+
+console.log(obs.toJS());

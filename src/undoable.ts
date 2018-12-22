@@ -20,3 +20,7 @@ export function undoableAction<T extends Function>(fn: T) {
         },
     });
 }
+
+export function runInUndoableAction(fn: Function) {
+    undoableAction(fn)()
+}
