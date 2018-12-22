@@ -1,36 +1,36 @@
 import { v4 as newUuid } from 'uuid';
 import { currentUndoableId, setUndoableId, isInAction, enterUndoable, exitUndoable } from './undo-redo-store';
 
-export function undoableAsync<T extends Function>(fn: T): T {
-	return new Proxy(fn, {
-		apply: async (target, thisArg, args) => {
-			const funcId = currentUndoableId() || newUuid();
-			const isInsideAction = isInAction();
+// @ts-ignore
+export function undoableAsync<T extends any[]>(fn: (...args: T) => IterableIterator<any>): (...args: T) => Promise<any> {
+	// @ts-ignore
+	return async (...args: T) => {
+		const funcId = currentUndoableId() || newUuid();
+		const isInsideAction = isInAction();
 
-			if (!isInsideAction) {
-				enterUndoable(funcId);
-			}
+		if (!isInsideAction) {
+			enterUndoable(funcId);
+		}
 
-			const gen = Reflect.apply(target, thisArg, args);
+		const gen = fn(...args);
 
-			let res = gen.next();
+		let res = gen.next();
 
-			while (res.value instanceof Promise) {
-				setUndoableId(undefined);
-				const newRes = await res;
-				setUndoableId(funcId);
-				res = gen.next(newRes);
-			}
+		while (res.value instanceof Promise) {
+			setUndoableId(undefined);
+			const newRes = await res;
+			setUndoableId(funcId);
+			res = gen.next(newRes);
+		}
 
-			if (!isInsideAction) {
-				exitUndoable();
-			}
+		if (!isInsideAction) {
+			exitUndoable();
+		}
 
-			return res.value;
-		},
-	});
+		return res.value;
+	}
 }
 
-export function runInUndoableAsync(fn: Function) {
+export function runInUndoableAsync(fn: () => any) {
 	undoableAsync(fn)();
 }
